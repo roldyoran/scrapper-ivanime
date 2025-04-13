@@ -1,5 +1,6 @@
 # Author: roldyoran
-# Oshi-no-ko: https://www.ivanime.com/paste/3425829/
+# Date: 2025
+# Description: Script para verificar actualizaciones de episodios de anime en ivanime.com
 import requests
 from bs4 import BeautifulSoup
 from colorama import Fore
