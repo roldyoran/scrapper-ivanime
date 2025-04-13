@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 from colorama import Fore
 import datetime
 import sqlite3
-import os
 
 # Configuración de la base de datos
 DB_NAME = "anime_counters.db"
