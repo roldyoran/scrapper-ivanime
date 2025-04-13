@@ -86,8 +86,6 @@ def main(url, anime_name):
     sopa2 = BeautifulSoup(str(todos_ep_lista), "html.parser")
     episodios = sopa2.find_all('div', class_="ep no1")
     contador1080 = len(episodios)
-    # print(f"Contador igual a {contador1080}")
-    # print(item)
     
     count = get_count(url)
     
