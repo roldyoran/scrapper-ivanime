@@ -53,36 +53,48 @@ async function getEpisodeData(page) {
     return { count, megaLink };
 }
 
+
 async function bypassCaptcha(page, url, attempt = 1, maxAttempts = 2) {
     console.log(`🔄 Intentando resolver CAPTCHA OUO.IO (Intento ${attempt}/${maxAttempts})`);
     try {
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
         await page.waitForLoadState('load', { timeout: 60000 });
 
-        await page.waitForSelector('#btn-main');
-        await Promise.all([
-            page.waitForNavigation(),  // Espera a que termine la navegación
-            page.click('#btn-main')    // Hace click que dispara la navegación
-            ]);
-        // await page.click('#btn-main');
-        console.log('✅ CAPTCHA resuelto (clic en boton I M HUMAN)');
-        
-       
-        await page.waitForSelector('#btn-main');
-        await Promise.all([
-            page.waitForNavigation(),  // Espera a que termine la navegación
-            page.click('#btn-main')    // Hace click que dispara la navegación
-            ]);
-        // await page.click('#btn-main');
-        console.log('✅ CAPTCHA resuelto (clic en botón GET LINK)');
+        // Función para buscar el botón correcto y hacer click esperando navegación
+        async function clickCaptchaButton() {
+            // Primero intenta con id #btn-main
+            let btn = page.locator('#btn-main');
+            try {
+                await btn.waitFor({ state: 'visible', timeout: 5000 });
+            } catch {
+                // Si no está visible, intenta con clase .btn.btn-main
+                btn = page.locator('button.btn.btn-main');
+                await btn.waitFor({ state: 'visible', timeout: 15000 }); // un poco más de tiempo
+            }
 
-       
-        
+            await Promise.all([
+                page.waitForNavigation({ waitUntil: 'load', timeout: 60000 }),
+                btn.click()
+            ]);
+        }
+
+        // Primer click (I M HUMAN)
+        await clickCaptchaButton();
+        console.log('✅ CAPTCHA resuelto (clic en boton I M HUMAN)');
+
+        await page.waitForLoadState('load', { timeout: 60000 });
+
+        // Segundo click (GET LINK)
+        await clickCaptchaButton();
+        console.log('✅ CAPTCHA resuelto (clic en boton GET LINK)');
+
         const finalUrl = page.url();
-        console.log(`✅ URL final tras CAPTCHA: ${finalUrl}`);
+        console.log(`✅ URL final tras los 2 CAPTCHA: ${finalUrl}`);
         return finalUrl;
     } catch (error) {
         console.error(`❌ Error en CAPTCHA (Intento ${attempt}):`, error.message);
+        console.log(await page.content());
+        await page.screenshot({ path: `error_captcha_attempt_${attempt}.png` });
         if (attempt < maxAttempts) {
             console.log('🔄 Reintentando en 5 segundos...');
             await page.waitForTimeout(5000);
@@ -91,6 +103,8 @@ async function bypassCaptcha(page, url, attempt = 1, maxAttempts = 2) {
         return null;
     }
 }
+
+
 
 async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttempts = 2) {
     try {
