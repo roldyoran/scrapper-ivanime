@@ -79,7 +79,7 @@ async function bypassCaptcha(page, url) {
         await page.waitForLoadState('networkidle');
         
         // Espera y haz clic en el botón CAPTCHA
-        await page.waitForSelector('#btn-main', { state: 'visible', timeout: 15000 });
+        await page.waitForSelector('#btn-main', { state: 'visible', timeout: 16000 });
         await page.click('#btn-main');
         console.log('✅ CAPTCHA resuelto (clic en "I\'m a human")');
         
@@ -89,11 +89,12 @@ async function bypassCaptcha(page, url) {
         console.error('❌ Error al resolver CAPTCHA:', error.message);
     }
 
-    // Espera a que la página cargue completamente
-    await page.waitForLoadState('networkidle');
     try {
+        // Esperar a que la página se actualice
+        await page.waitForLoadState('networkidle', { timeout: 30000 });
+
         // Espera y haz clic en el botón CAPTCHA
-        await page.waitForSelector('#btn-main', { state: 'visible', timeout: 15000 });
+        await page.waitForSelector('#btn-main', { state: 'visible', timeout: 16000 });
         await page.click('#btn-main');
         console.log('✅ CAPTCHA resuelto (clic en "Get Link")');
         
