@@ -57,18 +57,18 @@ async function getEpisodeData(page) {
 async function bypassCaptcha(page, url, attempt = 1, maxAttempts = 2) {
     console.log(`🔄 Intentando resolver CAPTCHA OUO.IO (Intento ${attempt}/${maxAttempts})`);
 
-    
-    
+
+
     try {
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
         await page.waitForLoadState('load', { timeout: 60000 });
-        
+
         const title = await page.title();
-        if (title.includes("Just a moment")) {
+        if (title.includes("Just a moment") || title.includes("Un momento...")) {
             console.log("🛡️ Página protegida por Cloudflare. Esperando bypass...");
             await page.waitForTimeout(12000);
         }
-        
+
 
 
         // Función para buscar el botón correcto y hacer click esperando navegación
