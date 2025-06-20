@@ -1,0 +1,95 @@
+{
+  "cookies": [
+    {
+      "name": "geoip",
+      "value": "GT",
+      "domain": "mega.nz",
+      "path": "/folder",
+      "expires": -1,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "_ga",
+      "value": "GA1.1.918978736.1750446373",
+      "domain": ".ouo.io",
+      "path": "/",
+      "expires": 1785006373.16304,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "GL_UI4",
+      "value": "eJw9jd1Og0AUhKH8tVrQSXgAHwFogPbS%2BBBekgN7pGtht1lWiG%2FvxkSv5svkm4znebv8Cf4aHxB8UY2XmtuirqqGBtHSpSVqmC819eX53Jwq0eAgl85SP7ENsV9mMraza4jjyIqNHLpBC07x7Ky%2F5qb0pkJEvSElUkSzM6YUSW%2F0trDJA4SKZkb8djXaZTTTpzYIyurkWCrHfoGdXvIge0DyLpVww%2ByIXVlkWezh8T6R%2FdBm7qSIfUSjIcHwX7EfyPKozTcSwcvN6jugJ9H9%2B7%2B%2FwVYWiAWvcnDn2l7Z%2FABDrk5k",
+      "domain": "cuplikenominee.com",
+      "path": "/",
+      "expires": 1750532773.350311,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "GL_GI10",
+      "value": "eJw9ycEKwiAcB2D9Q8YgjB%2FtAfYENgdRO8aCXbqtF3A2QjAdzoLePujQ9fsYY1RuQG6G1G2tdNMofTqq9gD%2BAPU3kA0o%2BpfJ09N4A55AtQalIFfgFvJfVefyB9xh25nRTzb6mKpBnRUoLCh%2BuL8MV%2FBZMFCOawFa7iUDf4vdF9LoHkk%3D",
+      "domain": "cuplikenominee.com",
+      "path": "/",
+      "expires": 1750532773.350467,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "None"
+    },
+    {
+      "name": "_ga_2E2Q0WVYTS",
+      "value": "GS2.1.s1750446373$o1$g0$t1750446376$j57$l0$h0",
+      "domain": ".ouo.io",
+      "path": "/",
+      "expires": 1785006376.160091,
+      "httpOnly": false,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "ouoio_session",
+      "value": "eyJpdiI6Iis5d2dlVUlyNEFOMnVveEN0ZVBENW85QmtMcEY2Sk8wQmpxQjBQS2xSSHM9IiwidmFsdWUiOiJZcXU5UlprTEU1WTY3eGNXYnc4RUx1dFozTUpIZ3V4bDNQSkV5MVNjaU5UdWNHUW1vSTN3cTh3ME01b01uNEd0QWUyS24xb1BPeVwvclYybDhjK1dZdlE9PSIsIm1hYyI6ImVhZWYyMDBkM2UyN2MwN2I1NDFiNjk4NmM1ODMzOTliODAxMTY5NzdhNzMwNjY4MGNmNzdjOTIxN2E3MTFhNGUifQ%3D%3D",
+      "domain": "ouo.io",
+      "path": "/",
+      "expires": -1,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "language",
+      "value": "eyJpdiI6IlZlbzBqVng2YW1abDFXeHhFSlh1VnV6dkRcLzdWRng5cmprMG0wczBuOXNFPSIsInZhbHVlIjoiNVZcL2ZFakNVdzc4YXlRcFhVaENPdTlzelB3RTdZdDBTQjJqSHQrcmNmU009IiwibWFjIjoiZTVlOGQ2ZGM1NWM5NDMzNzM4YTllN2MxMjkwMTBkY2ZjMzA0ZWJlMWEzYjQxM2U5ZGFiODQ0ZTgzMTZlZjc0NCJ9",
+      "domain": "ouo.io",
+      "path": "/",
+      "expires": 1785006383.678542,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "7ea856b3435b6f1d383e12f3cd645e0641618f8b",
+      "value": "eyJpdiI6IjNkSnpJNVJUNEoxdjZHaVo1bWw0cnorR1JiMHYyREpMRm5JVncrbHEwVWc9IiwidmFsdWUiOiI3M2FcL3ZVYTdzRXNhaFNjclg2YURPMElrMTNFMWtraXVzZWpiRXpZc2RqQjFIcVkyNUY3TEFrYzVOZmhRVWFrQktLREhuNkJ0TmxrK3duYnVINVd6NTc2NHZBd0ZCTjhzVU5TTDBaZGpLbVpsUHowejFjQ04wcm1DdUhNbkhCdmQ4RTVkbXN1U3JhUXd0cVJlZTBqNnFyQUx2ZlZRUmE0aDFxSEdHSmhwXC9FQmNkM1BpaGFGV2J6cXp0eWxlbG82RVpHTk5Yb0toeFlsbit6Z1dIcnN2WGpxclRxZGRNWVA1ZGhKcE9nbGc2dE1TSzFMeHJcL2JEaUh0dmI2RmVWekJNb2ZiOHRPQis2UWFHVlZpWnllaVA5aHdORFhwSmFtRDhvQXNQM2NvNUhWajgzN3o2Z1dUWjVsSkswSStYaHJZOEpja1lNbElYZWZINjg5NFQ2RmU1Qm1NVmlKMnRiK2p5cXRsWk1CejRYdkpaR0tycFI5eVVFOGRCcVVtZDZIVDhYQjZBejdqM3VDblAxSnlKXC9NRUJjQ2xQdlJNY01sUXFLdVFYUWdXd0ZyMjJHNU5Hb011K0VxRUF5N3drbjhXenVVRjRrS1BHQ1VYbFNZXC9MN0JzYXMwaGc5anlqT3VjaGdodGY5UWdLMGlDOXN1dHc0ZU9hNFFFTXNzYzZ3bHZUTDRTUzFnbndTRDN1cUF6eHEwcCtZemRxdmNYXC91XC9IVFRnY2JqMWV2RG8xUkZZb2hldnd3cjBqWXhnbk9UdVNwSm5HRHFUeXZiQUZVUUZuQjhxWTRZM2Q4clBCam1CeDRtdHhKRTVmMG1MWitKSTV0M0dZWWlrMFA5eGhnY0l0YjJTM0kzOVo3S1ZKa08wd0wwbGhWc1ZJd1BIZDFNSzc2b2p2WFNCdGVoUml6emJnckJoM3hvREVrbGxUNDRPQk1CZENpYnRzSjhIVWUrcTFKQkwycStVaFc2UXFYS203eGRHUnY3OWZIcEpXYWJjWTJuZXlJN1ZNOEpjSHJRN0Z3MzVpUWtNajlVVStJcEpCN21KR1lCQzlxOFJCNEhvUDA1Z2ZlXC9QNTlXSXJmaFdZbHd0bThkcElRSEFzZW9pQjRSSHZjNEk3OWlZbFNVRlJHTkZtRXJ3PT0iLCJtYWMiOiIwMzc4YjM3NGRkZTdlOTRkYWZkNWIxMmIxY2UyNDYyNzZjYzFmYTZkMmUxOTIzYjAwNmEzNmUwMjllZTMwZWNiIn0%3D",
+      "domain": "ouo.io",
+      "path": "/",
+      "expires": 1750453583.678586,
+      "httpOnly": true,
+      "secure": false,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://ouo.io",
+      "localStorage": [
+        {
+          "name": "3ee05e9a6e382c77b596614b465b5890",
+          "value": "c681d5521f68590c"
+        }
+      ]
+    }
+  ]
+}

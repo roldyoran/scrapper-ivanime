@@ -52,8 +52,14 @@ async function getEpisodeData(page) {
     }
     return { count, megaLink };
 }
+
 async function bypassCaptcha(page, url, attempt = 1, maxAttempts = 2) {
     console.log(`🔄 Intentando resolver CAPTCHA OUO.IO (Intento ${attempt}/${maxAttempts})`);
+
+    await page.mouse.move(100, 100);
+    await page.waitForTimeout(1000);
+    await page.mouse.wheel(0, 300); // deltaX = 0, deltaY = 300
+    await page.waitForTimeout(500);
 
     try {
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -61,37 +67,34 @@ async function bypassCaptcha(page, url, attempt = 1, maxAttempts = 2) {
 
         const title = await page.title();
         if (title.includes("Just a moment") || title.includes("Un momento")) {
-            console.log("🛡️ Página protegida por Cloudflare. Esperando bypass...");
-            await page.waitForTimeout(12000); // Esperar el JS challenge
+            console.log("🛡️ Página protegida por Cloudflare.");
+            await page.waitForTimeout(24000);
+            await page.context().clearCookies();
         }
 
-        // Buscar botón correcto y hacer clic
+        // Función para buscar el botón correcto y hacer click esperando navegación
         async function clickCaptchaButton() {
-            const selectors = ['#btn-main', 'button.btn.btn-main', 'button#btn-main', 'button.primary', 'button'];
-            for (const selector of selectors) {
-                const btn = page.locator(selector);
-                try {
-                    await btn.waitFor({ state: 'visible', timeout: 10000 });
-                    console.log(`✅ Encontrado botón con selector: ${selector}`);
-                    await Promise.all([
-                        page.waitForNavigation({ waitUntil: 'load', timeout: 60000 }),
-                        btn.click()
-                    ]);
-                    return;
-                } catch {
-                    console.log(`❌ No se encontró botón con selector: ${selector}`);
-                }
+            // Primero intenta con id #btn-main
+            let btn = page.locator('#btn-main');
+            try {
+                await btn.waitFor({ state: 'visible', timeout: 5000 });
+            } catch {
+                // Si no está visible, intenta con clase .btn.btn-main
+                btn = page.locator('button.btn.btn-main');
+                await btn.waitFor({ state: 'visible', timeout: 15000 }); // un poco más de tiempo
             }
-            throw new Error('No se encontró ningún botón válido para el CAPTCHA');
+
+            await Promise.all([
+                page.waitForNavigation({ waitUntil: 'load', timeout: 60000 }),
+                btn.click()
+            ]);
         }
 
-        // Primer click (I M HUMAN)
+
+
         await clickCaptchaButton();
         console.log('✅ CAPTCHA resuelto (clic en botón I M HUMAN)');
-
         await page.waitForLoadState('load', { timeout: 60000 });
-
-        // Segundo click (GET LINK)
         await clickCaptchaButton();
         console.log('✅ CAPTCHA resuelto (clic en botón GET LINK)');
 
@@ -113,8 +116,6 @@ async function bypassCaptcha(page, url, attempt = 1, maxAttempts = 2) {
         return null;
     }
 }
-
-
 
 async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttempts = 2) {
     try {
@@ -147,7 +148,8 @@ async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttem
 
                     let allLinks = [];
                     try {
-                        allLinks = JSON.parse(fs.readFileSync('./mega_links.json', 'utf8'));
+                        const content = fs.readFileSync('./mega_links.json', 'utf8');
+                        allLinks = content ? JSON.parse(content) : [];
                         if (!Array.isArray(allLinks)) allLinks = [];
                     } catch {
                         allLinks = [];
@@ -185,6 +187,18 @@ async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttem
     const db = await setupDatabase();
     await initializeDatabase(db);
 
+    // Verificar si storage.json es válido
+    let storageState = undefined;
+    try {
+        const content = fs.readFileSync('storage.json', 'utf8');
+        if (content.trim()) {
+            JSON.parse(content); // validación
+            storageState = 'storage.json';
+        }
+    } catch {
+        console.log('⚠️ Archivo storage.json no válido, se ignorará esta sesión.');
+    }
+
     const browser = await chromium.launch({
         headless: true,
         args: [
@@ -200,25 +214,27 @@ async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttem
         ]
     });
 
-
     const context = await browser.newContext({
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
         viewport: { width: 1920, height: 1080 },
         locale: 'es-ES',
         timezoneId: 'America/Guatemala',
+        storageState,
         extraHTTPHeaders: {
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Encoding': 'gzip, deflate, br',
             'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-            'Referer': 'https://www.ivanime.com/',
+            'Connection': 'keep-alive',
+            'Upgrade-Insecure-Requests': '1',
+            'Referer': 'https://www.ivanime.com/'
         }
     });
-
-
 
     const page = await context.newPage();
 
     const animeLinks = {
         'tobeherox': 'https://www.ivanime.com/paste/2031576/',
-        // 'fireforce': 'https://www.ivanime.com/paste/3031564/',
+        // Agrega más animes aquí
     };
 
     try {
@@ -237,19 +253,26 @@ async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttem
 
         if (updatedAnimes.length) {
             console.log('✅ Animes actualizados:');
-            updatedAnimes.forEach(a => console.log(`- ${a.animeName}: ${a.megaUrlFinal} (${a.attempts} intento${a.attempts > 1 ? 's' : ''})`));
+            updatedAnimes.forEach(a =>
+                console.log(`- ${a.animeName}: ${a.megaUrlFinal} (${a.attempts} intento${a.attempts > 1 ? 's' : ''})`)
+            );
         }
 
         if (failedAnimes.length) {
             console.log('❌ Animes con errores:');
-            failedAnimes.forEach(a => console.log(`- ${a.animeName}: ${a.error} (${a.attempts} intento${a.attempts > 1 ? 's' : ''})`));
+            failedAnimes.forEach(a =>
+                console.log(`- ${a.animeName}: ${a.error} (${a.attempts} intento${a.attempts > 1 ? 's' : ''})`)
+            );
         }
 
         if (noNewEpisodes.length) {
             console.log('ℹ️ Animes sin nuevos episodios:');
-            noNewEpisodes.forEach(a => console.log(`- ${a.animeName} (${a.attempts} intento${a.attempts > 1 ? 's' : ''})`));
+            noNewEpisodes.forEach(a =>
+                console.log(`- ${a.animeName} (${a.attempts} intento${a.attempts > 1 ? 's' : ''})`)
+            );
         }
 
+        await context.storageState({ path: 'storage.json' });
         console.log(`\n🎉 Proceso completado. ${updatedAnimes.length} actualizados, ${failedAnimes.length} con errores, ${noNewEpisodes.length} sin nuevos episodios.`);
     } catch (error) {
         console.error('❌ Error general:', error.message);
