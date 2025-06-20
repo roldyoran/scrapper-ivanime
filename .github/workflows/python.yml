@@ -35,5 +35,6 @@ jobs:
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: "Actualización automática: imagenes"
-          branch: master  # Cambia si usas otra rama
-          file_pattern: '*'  # Se actualizarán todos los archivos JSON
+          branch: main  # Cambia si usas otra rama
+          file_pattern: '.'  # Más explícito para incluir todo
+          add_options: '--all'  # Asegura que incluya archivos nuevos
