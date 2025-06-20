@@ -25,13 +25,13 @@ jobs:
       
       # Paso 3: Instalar dependencias
       - name: Install dependencies
-        run: |
-          npm ci
+        run: 
+          npm install
           npx playwright install
       
       # Paso 4: Ejecutar tu script
       - name: Run anime checker
-        run: node index.js
+        run: npm run start
       
       # Paso 5: Subir cambios al repositorio (commit + push)
       - name: Commit and push changes

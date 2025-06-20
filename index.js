@@ -3,7 +3,6 @@ const sqlite3 = require('sqlite3').verbose();
 const { open } = require('sqlite');
 const fs = require('fs');
 
-// Configuración de la base de datos
 async function setupDatabase() {
     return open({
         filename: './anime_data.db',
@@ -11,7 +10,6 @@ async function setupDatabase() {
     });
 }
 
-// Función para inicializar la tabla
 async function initializeDatabase(db) {
     await db.exec(`
         CREATE TABLE IF NOT EXISTS anime_counters (
@@ -23,13 +21,11 @@ async function initializeDatabase(db) {
     `);
 }
 
-// Función para obtener el contador actual de la base de datos
 async function getCurrentCount(db, url) {
     const result = await db.get('SELECT count FROM anime_counters WHERE url = ?', [url]);
     return result ? result.count : 0;
 }
 
-// Función para actualizar o insertar el contador en la base de datos
 async function updateCount(db, url, animeName, newCount) {
     const now = new Date().toISOString();
     await db.run(`
@@ -39,22 +35,13 @@ async function updateCount(db, url, animeName, newCount) {
 }
 
 async function getEpisodeData(page) {
-    // Esperar a que el contenido dinámico se cargue
-    await page.waitForLoadState('networkidle');
-    
-    // Busca el div con id "qlt-1080p"
+    await page.waitForLoadState('load');
     const qltDiv = await page.$('div#qlt-1080p');
     if (!qltDiv) return { count: 0, megaLink: null };
-
-    // Dentro de ese div, busca el div con clase "episodios drv"
     const episodiosDiv = await qltDiv.$('div.episodios.drv');
     if (!episodiosDiv) return { count: 0, megaLink: null };
-
-    // Obtiene todos los divs con clase "ep no1"
     const episodios = await episodiosDiv.$$('div.ep.no1');
     const count = episodios.length;
-
-    // Extrae el enlace MEGA del ÚLTIMO episodio
     let megaLink = null;
     if (count > 0) {
         const lastEpisode = episodios[count - 1];
@@ -63,218 +50,73 @@ async function getEpisodeData(page) {
             megaLink = await megaElement.getAttribute('href');
         }
     }
-
     return { count, megaLink };
 }
 
 async function bypassCaptcha(page, url, attempt = 1, maxAttempts = 2) {
-    console.log(`🔄 Intentando resolver CAPTCHA (Intento ${attempt}/${maxAttempts})`);
-    
+    console.log(`🔄 Intentando resolver CAPTCHA OUO.IO (Intento ${attempt}/${maxAttempts})`);
     try {
-        // Navega a la URL de MEGA
-        await page.goto(url, { 
-            waitUntil: 'domcontentloaded',
-            timeout: 30000
-        });
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.waitForLoadState('load', { timeout: 30000 });
 
-        // Esperar a que la página se cargue completamente
-        await page.waitForLoadState('networkidle', { timeout: 30000 });
+        await page.waitForSelector('#btn-main', { state: 'visible', timeout: 30000 });
+        const currentUrl = page.url();
+        await page.click('#btn-main');
+        console.log('✅ CAPTCHA resuelto (clic en boton I M HUMAN)');
         
-        // Primer CAPTCHA - "I'm a human"
         try {
-            await page.waitForSelector('#btn-main', { state: 'visible', timeout: 30000 });
-            
-            // Obtener URL actual antes del clic
-            const currentUrl = page.url();
-            
-            await page.click('#btn-main');
-            console.log('✅ CAPTCHA 1 resuelto (clic en "I\'m a human")');
-            
-            // Esperar a que la URL cambie (redirección) o a que la página se recargue
-            try {
-                await page.waitForURL(url => url !== currentUrl, { timeout: 30000 });
-            } catch (urlError) {
-                // Si no hay cambio de URL, esperar a que la página se estabilice
-                await page.waitForLoadState('networkidle', { timeout: 30000 });
-            }
-            
-        } catch (error) {
-            console.error(`❌ Error al resolver CAPTCHA 1 Human (Intento ${attempt}):`, error.message);
-            throw error;
+            await page.waitForURL(url => url !== currentUrl, { timeout: 30000 });
+        } catch {
+            await page.waitForLoadState('load', { timeout: 30000 });
         }
 
-        // Segundo CAPTCHA - "Get Link"
+        await page.waitForSelector('#btn-main', { state: 'visible', timeout: 30000 });
+        const currentUrl2 = page.url();
+        await page.click('#btn-main');
+        console.log('✅ CAPTCHA resuelto (clic en botón GET LINK)');
+
         try {
-            // Esperar a que la página se actualice completamente
-            await page.waitForLoadState('networkidle', { timeout: 30000 });
-
-            // Esperar un poco más para asegurar que el DOM esté listo
-            await page.waitForTimeout(2000);
-
-            await page.waitForSelector('#btn-main', { state: 'visible', timeout: 30000 });
-            
-            // Obtener URL actual antes del segundo clic
-            const currentUrl = page.url();
-            
-            await page.click('#btn-main');
-            console.log('✅ CAPTCHA 2 resuelto (clic en "Get Link")');
-            
-            // Esperar a que la URL cambie nuevamente
-            try {
-                await page.waitForURL(url => url !== currentUrl, { timeout: 30000 });
-            } catch (urlError) {
-                // Si no hay cambio de URL, esperar a que la página se estabilice
-                await page.waitForLoadState('networkidle', { timeout: 30000 });
-            }
-            
-            const finalUrl = page.url();
-            console.log(`✅ CAPTCHA completado exitosamente en intento ${attempt}`);
-            console.log(`🔗 URL final: ${finalUrl}`);
-            return finalUrl;
-            
-        } catch (error) {
-            console.error(`❌ Error al resolver CAPTCHA 2 Link (Intento ${attempt}):`, error.message);
-            throw error;
+            await page.waitForURL(url => url !== currentUrl2, { timeout: 30000 });
+        } catch {
+            await page.waitForLoadState('load', { timeout: 30000 });
         }
         
+        const finalUrl = page.url();
+        console.log(`✅ URL final tras CAPTCHA: ${finalUrl}`);
+        return finalUrl;
     } catch (error) {
-        console.error(`❌ Error general en CAPTCHA (Intento ${attempt}/${maxAttempts}):`, error.message);
-        
-        // Si falla y aún quedan intentos, reintenta
+        console.error(`❌ Error en CAPTCHA (Intento ${attempt}):`, error.message);
         if (attempt < maxAttempts) {
-            console.log(`🔄 Reintentando resolver CAPTCHA en 5 segundos...`);
+            console.log('🔄 Reintentando en 5 segundos...');
             await page.waitForTimeout(5000);
             return await bypassCaptcha(page, url, attempt + 1, maxAttempts);
         }
-        
-        console.error(`❌ CAPTCHA falló después de ${maxAttempts} intentos`);
-        return null;
-    }
-}
-
-// Alternativa más robusta si sigues teniendo problemas:
-async function bypassCaptchaRobust(page, url, attempt = 1, maxAttempts = 2) {
-    console.log(`🔄 Intentando resolver CAPTCHA (Intento ${attempt}/${maxAttempts})`);
-    
-    try {
-        await page.goto(url, { 
-            waitUntil: 'domcontentloaded',
-            timeout: 30000
-        });
-
-        await page.waitForLoadState('networkidle', { timeout: 30000 });
-        
-        // Primer CAPTCHA
-        try {
-            await page.waitForSelector('#btn-main', { state: 'visible', timeout: 30000 });
-            
-            // Usar Promise.race para manejar múltiples posibles respuestas
-            await Promise.race([
-                page.click('#btn-main'),
-                page.waitForTimeout(1000) // Timeout de seguridad
-            ]);
-            
-            console.log('✅ CAPTCHA 1 resuelto (clic en "I\'m a human")');
-            
-            // Esperar a que algo cambie en la página
-            await Promise.race([
-                page.waitForLoadState('networkidle', { timeout: 15000 }),
-                page.waitForSelector('#btn-main', { state: 'visible', timeout: 15000 }),
-                page.waitForTimeout(10000) // Timeout máximo
-            ]);
-            
-        } catch (error) {
-            console.error(`❌ Error al resolver CAPTCHA 1 Human (Intento ${attempt}):`, error.message);
-            throw error;
-        }
-
-        // Segundo CAPTCHA
-        try {
-            // Esperar un poco antes del segundo intento
-            await page.waitForTimeout(3000);
-            
-            // Verificar si el botón existe
-            const buttonExists = await page.locator('#btn-main').isVisible();
-            if (!buttonExists) {
-                throw new Error('Botón #btn-main no encontrado para segundo CAPTCHA');
-            }
-            
-            await page.click('#btn-main');
-            console.log('✅ CAPTCHA 2 resuelto (clic en "Get Link")');
-            
-            // Esperar a que la página final se cargue
-            await Promise.race([
-                page.waitForLoadState('networkidle', { timeout: 15000 }),
-                page.waitForTimeout(10000)
-            ]);
-            
-            const finalUrl = page.url();
-            console.log(`✅ CAPTCHA completado exitosamente en intento ${attempt}`);
-            console.log(`🔗 URL final: ${finalUrl}`);
-            return finalUrl;
-            
-        } catch (error) {
-            console.error(`❌ Error al resolver CAPTCHA 2 Link (Intento ${attempt}):`, error.message);
-            throw error;
-        }
-        
-    } catch (error) {
-        console.error(`❌ Error general en CAPTCHA (Intento ${attempt}/${maxAttempts}):`, error.message);
-        
-        if (attempt < maxAttempts) {
-            console.log(`🔄 Reintentando resolver CAPTCHA en 5 segundos...`);
-            await page.waitForTimeout(5000);
-            return await bypassCaptchaRobust(page, url, attempt + 1, maxAttempts);
-        }
-        
-        console.error(`❌ CAPTCHA falló después de ${maxAttempts} intentos`);
         return null;
     }
 }
 
 async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttempts = 2) {
     try {
-        console.log(`\n🔍 Procesando anime: ${animeName}${attempt > 1 ? ` (Intento ${attempt}/${maxAttempts})` : ''}`);
-        
-        // Obtener el contador actual de la base de datos
+        console.log(`\n🔍 Procesando anime: ${animeName} (Intento ${attempt}/${maxAttempts})`);
         const currentCount = await getCurrentCount(db, animeUrl);
-        console.log(`📊 Contador actual en DB: ${currentCount}`);
+        console.log(`📊 Contador actual: ${currentCount}`);
 
-        // Obtener el enlace MEGA y el nuevo contador
-        await page.goto(animeUrl, { 
-            waitUntil: 'domcontentloaded',
-            timeout: 30000
-        });
-        
-        // Esperar contenido dinámico
+        await page.goto(animeUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
         await page.waitForTimeout(2000);
-        
+
         const { count: newCount, megaLink } = await getEpisodeData(page);
         console.log(`📊 Episodios encontrados: ${newCount}`);
 
-        // Verificar si hay nuevos episodios
         if (newCount > currentCount) {
-            console.log('🎉 ¡Nuevos episodios encontrados!');
-            
+            console.log('🎉 Nuevos episodios encontrados');
             if (megaLink) {
                 console.log('🔄 Navegando a MEGA para resolver CAPTCHA...');
                 const megaUrlFinal = await bypassCaptcha(page, megaLink);
-                
                 if (megaUrlFinal) {
-                    console.log(`🔗 Enlace final de MEGA: ${megaUrlFinal}`);
-                    
-                    // Actualizar la base de datos
                     await updateCount(db, animeUrl, animeName, newCount);
                     console.log('💾 Base de datos actualizada');
-                    
-                    const fecha = new Date();
-                    const fechaFormateada = fecha.toLocaleDateString('es-ES', {
-                        day: '2-digit',
-                        month: '2-digit',
-                        year: 'numeric'
-                    }).replace(/\//g, '-');
 
-                    // Guardar enlace en JSON
+                    const fechaFormateada = new Date().toLocaleDateString('es-ES').replace(/\//g, '-');
                     const animeData = {
                         name: animeName,
                         megaLink: megaUrlFinal,
@@ -282,91 +124,52 @@ async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttem
                         episodeCount: newCount
                     };
 
-                    // Leer archivo existente o crear uno nuevo
                     let allLinks = [];
                     try {
                         allLinks = JSON.parse(fs.readFileSync('./mega_links.json', 'utf8'));
-                        if (!Array.isArray(allLinks)) {
-                            allLinks = [];
-                        }
-                    } catch (e) {
+                        if (!Array.isArray(allLinks)) allLinks = [];
+                    } catch {
                         allLinks = [];
                     }
 
-                    // Buscar si ya existe un elemento con el mismo nombre
                     const existingIndex = allLinks.findIndex(item => item.name === animeName);
+                    if (existingIndex !== -1) allLinks[existingIndex] = animeData;
+                    else allLinks.push(animeData);
 
-                    if (existingIndex !== -1) {
-                        // Reemplazar el elemento existente
-                        allLinks[existingIndex] = animeData;
-                        console.log('📄 Enlace MEGA actualizado en mega_links.json');
-                    } else {
-                        // Agregar nuevo enlace
-                        allLinks.push(animeData);
-                        console.log('📄 Enlace MEGA agregado a mega_links.json');
-                    }
-
-                    // Guardar los cambios
                     fs.writeFileSync('./mega_links.json', JSON.stringify(allLinks, null, 2));
-                    
+                    console.log('📄 mega_links.json actualizado');
                     return { success: true, animeName, megaUrlFinal, attempts: attempt };
                 } else {
-                    console.log('⚠️ No se pudo resolver el CAPTCHA después de todos los intentos');
+                    console.log('⚠️ No se pudo resolver el CAPTCHA');
                 }
             } else {
                 console.log('⚠️ No se encontró enlace MEGA');
             }
         } else {
-            console.log('ℹ️ No hay nuevos episodios disponibles');
+            console.log('ℹ️ No hay nuevos episodios');
         }
-        
         return { success: false, animeName, attempts: attempt };
     } catch (error) {
-        console.error(`❌ Error procesando ${animeName} (Intento ${attempt}/${maxAttempts}):`, error.message);
-        
-        // Si falla y aún quedan intentos, reintenta
+        console.error(`❌ Error procesando ${animeName} (Intento ${attempt}):`, error.message);
         if (attempt < maxAttempts) {
-            console.log(`🔄 Reintentando ${animeName} en 3 segundos...`);
-            await page.waitForTimeout(3000); // Pausa de 3 segundos antes del retry
+            console.log('🔄 Reintentando en 3 segundos...');
+            await page.waitForTimeout(3000);
             return await processAnime(db, page, animeName, animeUrl, attempt + 1, maxAttempts);
         }
-        
         return { success: false, animeName, error: error.message, attempts: attempt };
     }
 }
 
-// Ejecución principal
 (async () => {
-    // Inicializar base de datos
     const db = await setupDatabase();
     await initializeDatabase(db);
 
-    // Configuración optimizada para headless con soporte JavaScript dinámico
     const browser = await chromium.launch({ 
         headless: true,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--no-zygote',
-            '--disable-gpu',
-            '--disable-background-timer-throttling',
-            '--disable-backgrounding-occluded-windows',
-            '--disable-renderer-backgrounding',
-            '--disable-features=TranslateUI',
-            '--disable-ipc-flooding-protection',
-            '--disable-extensions',
-            '--disable-default-apps',
-            '--disable-sync',
-            '--disable-translate',
-            '--hide-scrollbars',
-            '--mute-audio',
-            '--no-default-browser-check',
-            '--disable-web-security',
-            '--disable-features=VizDisplayCompositor',
-            '--disable-blink-features=AutomationControlled'
+            '--disable-dev-shm-usage'
         ]
     });
 
@@ -376,92 +179,47 @@ async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttem
         locale: 'es-ES',
         timezoneId: 'America/Guatemala',
         extraHTTPHeaders: {
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
             'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Cache-Control': 'no-cache',
-            'Pragma': 'no-cache',
-            'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
-            'Sec-Ch-Ua-Mobile': '?0',
-            'Sec-Ch-Ua-Platform': '"Windows"',
-            'Sec-Fetch-Dest': 'document',
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Sec-Fetch-User': '?1',
-            'Upgrade-Insecure-Requests': '1'
         }
     });
 
     const page = await context.newPage();
 
-    // Configuraciones adicionales para JavaScript dinámico
-    await page.setExtraHTTPHeaders({
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
-    });
-
-    // Interceptar y modificar requests si es necesario
-    await page.route('**/*', (route) => {
-        const request = route.request();
-        const headers = {
-            ...request.headers(),
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        };
-        route.continue({ headers });
-    });
-
-    // Diccionario con diferentes nombres de anime y enlaces
     const animeLinks = {
         'tobeherox': 'https://www.ivanime.com/paste/2031576/',
         'fireforce': 'https://www.ivanime.com/paste/3031564/',
-        // Puedes agregar más animes aquí
     };
 
     try {
         console.log('🚀 Iniciando verificación de animes...');
-        
         const results = [];
-        
-        // Procesar cada anime secuencialmente para evitar problemas
         for (const [animeName, animeUrl] of Object.entries(animeLinks)) {
             const result = await processAnime(db, page, animeName, animeUrl);
             results.push(result);
-            
-            // Pequeña pausa entre requests para ser más amigable
             await page.waitForTimeout(1000);
         }
-        
-        // Mostrar resumen
+
         console.log('\n📝 Resumen de resultados:');
         const updatedAnimes = results.filter(r => r.success);
         const failedAnimes = results.filter(r => !r.success && r.error);
         const noNewEpisodes = results.filter(r => !r.success && !r.error);
-        
-        if (updatedAnimes.length > 0) {
-            console.log('✅ Animes actualizados:');
-            updatedAnimes.forEach(anime => {
-                console.log(`- ${anime.animeName}: ${anime.megaUrlFinal} (${anime.attempts} intento${anime.attempts > 1 ? 's' : ''})`);
-            });
-        }
-        
-        if (failedAnimes.length > 0) {
-            console.log('❌ Animes con errores:');
-            failedAnimes.forEach(anime => {
-                console.log(`- ${anime.animeName}: ${anime.error} (${anime.attempts} intento${anime.attempts > 1 ? 's' : ''})`);
-            });
-        }
-        
-        if (noNewEpisodes.length > 0) {
-            console.log('ℹ️ Animes sin nuevos episodios:');
-            noNewEpisodes.forEach(anime => {
-                console.log(`- ${anime.animeName} (${anime.attempts} intento${anime.attempts > 1 ? 's' : ''})`);
-            });
-        }
-        
-        console.log(`\n🎉 Proceso completado. ${updatedAnimes.length} animes actualizados, ${failedAnimes.length} con errores, ${noNewEpisodes.length} sin nuevos episodios.`);
 
+        if (updatedAnimes.length) {
+            console.log('✅ Animes actualizados:');
+            updatedAnimes.forEach(a => console.log(`- ${a.animeName}: ${a.megaUrlFinal} (${a.attempts} intento${a.attempts > 1 ? 's' : ''})`));
+        }
+
+        if (failedAnimes.length) {
+            console.log('❌ Animes con errores:');
+            failedAnimes.forEach(a => console.log(`- ${a.animeName}: ${a.error} (${a.attempts} intento${a.attempts > 1 ? 's' : ''})`));
+        }
+
+        if (noNewEpisodes.length) {
+            console.log('ℹ️ Animes sin nuevos episodios:');
+            noNewEpisodes.forEach(a => console.log(`- ${a.animeName} (${a.attempts} intento${a.attempts > 1 ? 's' : ''})`));
+        }
+
+        console.log(`\n🎉 Proceso completado. ${updatedAnimes.length} actualizados, ${failedAnimes.length} con errores, ${noNewEpisodes.length} sin nuevos episodios.`);
     } catch (error) {
         console.error('❌ Error general:', error.message);
     } finally {
