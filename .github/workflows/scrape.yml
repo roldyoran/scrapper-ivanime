@@ -17,6 +17,7 @@ jobs:
       with:
         ref: 'feature/nodejs-implementation'
         fetch-depth: 0  # Necesario para hacer commit después
+        persist-credentials: true  # Necesario para poder hacer push después
 
     # Paso 2: Configurar Node
     - name: Set up Node.js
@@ -27,23 +28,19 @@ jobs:
 
     # Paso 3: Instalar dependencias
     - name: Install dependencies
-      run: npm install
+      run: npm ci  # Usamos 'npm ci' para instalación limpia en CI
 
+    # Paso 4: Instalar Playwright
     - name: Install Playwright browsers
       run: npx playwright install --with-deps
 
-    # Paso 4: Ejecutar tu script
+    # Paso 5: Ejecutar tu script
     - name: Run anime checker
       run: node index.js
+      env:
+        NODE_ENV: production  # Añadido para mejor manejo de entorno
 
-    # - name: Upload results
-    #   uses: actions/upload-artifact@v3
-    #   if: always()
-    #   with:
-    #     name: mega-links
-    #     path: mega_links.json
-
-    # Paso 5: Commit y push de los cambios
+    # Paso 6: Commit y push de los cambios
     - name: Commit and push changes
       uses: stefanzweifel/git-auto-commit-action@v4
       with:
