@@ -86,7 +86,7 @@ async def take_screenshot_async(mega_url, screenshot_path="screenshot.png"):
                     print("Advertencia: No se pudo verificar el cuerpo de la página")
                 
                 # Manejo de Cloudflare u otras protecciones
-                if await page.title() in ["Just a moment, please...", "Verification"]:
+                if await page.title() in ["Just a moment, please...", "Un momento..."]:
                     print("Detectada protección. Esperando bypass manual...")
                     try:
                         await page.wait_for_selector('text=Verify you are human', timeout=10000)
@@ -101,6 +101,11 @@ async def take_screenshot_async(mega_url, screenshot_path="screenshot.png"):
                 print("Tomando captura de pantalla...")
                 await page.screenshot(path=screenshot_path, full_page=True)
                 print(f"Captura guardada exitosamente en: {screenshot_path}")
+                # guardar el content en un archivo txt
+                with open("content.txt", "w", encoding="utf-8") as f:
+                    content = await page.content()
+                    f.write(content)
+                    print("Contenido de la página guardado en content.txt")
                 return True
                 
             except Exception as page_error:
