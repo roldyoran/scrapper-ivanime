@@ -91,7 +91,7 @@ async def take_screenshot_async(mega_url, screenshot_path="screenshot.png"):
                     try:
                         await page.wait_for_selector('text=Verify you are human', timeout=10000)
                         print("Por favor completa el captcha manualmente...")
-                        await page.wait_for_timeout(60000)  # 60 segundos para completar manualmente
+                        await page.wait_for_timeout(10000)  # 60 segundos para completar manualmente
                     except:
                         print("Continuando sin interacción manual...")
                 
