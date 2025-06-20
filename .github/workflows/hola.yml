@@ -1,0 +1,14 @@
+name: Imprimir Hola
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Permite ejecutar manualmente
+
+jobs:
+  saludar:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Imprimir hola
+      run: echo "hola"
