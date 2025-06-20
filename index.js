@@ -56,29 +56,29 @@ async function getEpisodeData(page) {
 async function bypassCaptcha(page, url, attempt = 1, maxAttempts = 2) {
     console.log(`🔄 Intentando resolver CAPTCHA OUO.IO (Intento ${attempt}/${maxAttempts})`);
     try {
-        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30000 });
-        await page.waitForLoadState('load', { timeout: 30000 });
+        await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.waitForLoadState('load', { timeout: 60000 });
 
-        await page.waitForSelector('#btn-main', { state: 'visible', timeout: 30000 });
+        await page.waitForSelector('#btn-main', { state: 'visible', timeout: 60000 });
         const currentUrl = page.url();
         await page.click('#btn-main');
         console.log('✅ CAPTCHA resuelto (clic en boton I M HUMAN)');
         
         try {
-            await page.waitForURL(url => url !== currentUrl, { timeout: 30000 });
+            await page.waitForURL(url => url !== currentUrl, { timeout: 60000 });
         } catch {
-            await page.waitForLoadState('load', { timeout: 30000 });
+            await page.waitForLoadState('load', { timeout: 60000 });
         }
 
-        await page.waitForSelector('#btn-main', { state: 'visible', timeout: 30000 });
+        await page.waitForSelector('#btn-main', { state: 'visible', timeout: 60000 });
         const currentUrl2 = page.url();
         await page.click('#btn-main');
         console.log('✅ CAPTCHA resuelto (clic en botón GET LINK)');
 
         try {
-            await page.waitForURL(url => url !== currentUrl2, { timeout: 30000 });
+            await page.waitForURL(url => url !== currentUrl2, { timeout: 60000 });
         } catch {
-            await page.waitForLoadState('load', { timeout: 30000 });
+            await page.waitForLoadState('load', { timeout: 60000 });
         }
         
         const finalUrl = page.url();
@@ -101,7 +101,7 @@ async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttem
         const currentCount = await getCurrentCount(db, animeUrl);
         console.log(`📊 Contador actual: ${currentCount}`);
 
-        await page.goto(animeUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+        await page.goto(animeUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
         await page.waitForTimeout(2000);
 
         const { count: newCount, megaLink } = await getEpisodeData(page);
@@ -169,8 +169,11 @@ async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttem
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage'
-        ]
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--single-process',
+            '--no-zygote',
+            ]
     });
 
     const context = await browser.newContext({
