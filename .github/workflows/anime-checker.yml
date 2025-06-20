@@ -36,6 +36,6 @@ jobs:
       - name: Commit and push changes
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: "Actualización automática de enlaces MEGA y DB - $(date +'%Y-%m-%d %H:%M')"
+          commit_message: "Actualización automática de enlaces MEGA y DB"
           branch: main
-          file_pattern: '*.json *.db'
+          file_pattern: '*.json'
