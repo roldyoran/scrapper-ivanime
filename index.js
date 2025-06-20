@@ -52,60 +52,59 @@ async function getEpisodeData(page) {
     }
     return { count, megaLink };
 }
-
-
 async function bypassCaptcha(page, url, attempt = 1, maxAttempts = 2) {
     console.log(`🔄 Intentando resolver CAPTCHA OUO.IO (Intento ${attempt}/${maxAttempts})`);
-
-
 
     try {
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
         await page.waitForLoadState('load', { timeout: 60000 });
 
         const title = await page.title();
-        if (title.includes("Just a moment") || title.includes("Un momento...")) {
+        if (title.includes("Just a moment") || title.includes("Un momento")) {
             console.log("🛡️ Página protegida por Cloudflare. Esperando bypass...");
-            await page.waitForTimeout(12000);
+            await page.waitForTimeout(12000); // Esperar el JS challenge
         }
 
-
-
-        // Función para buscar el botón correcto y hacer click esperando navegación
+        // Buscar botón correcto y hacer clic
         async function clickCaptchaButton() {
-            // Primero intenta con id #btn-main
-            let btn = page.locator('#btn-main');
-            try {
-                await btn.waitFor({ state: 'visible', timeout: 5000 });
-            } catch {
-                // Si no está visible, intenta con clase .btn.btn-main
-                btn = page.locator('button.btn.btn-main');
-                await btn.waitFor({ state: 'visible', timeout: 15000 }); // un poco más de tiempo
+            const selectors = ['#btn-main', 'button.btn.btn-main', 'button#btn-main', 'button.primary', 'button'];
+            for (const selector of selectors) {
+                const btn = page.locator(selector);
+                try {
+                    await btn.waitFor({ state: 'visible', timeout: 10000 });
+                    console.log(`✅ Encontrado botón con selector: ${selector}`);
+                    await Promise.all([
+                        page.waitForNavigation({ waitUntil: 'load', timeout: 60000 }),
+                        btn.click()
+                    ]);
+                    return;
+                } catch {
+                    console.log(`❌ No se encontró botón con selector: ${selector}`);
+                }
             }
-
-            await Promise.all([
-                page.waitForNavigation({ waitUntil: 'load', timeout: 60000 }),
-                btn.click()
-            ]);
+            throw new Error('No se encontró ningún botón válido para el CAPTCHA');
         }
 
         // Primer click (I M HUMAN)
         await clickCaptchaButton();
-        console.log('✅ CAPTCHA resuelto (clic en boton I M HUMAN)');
+        console.log('✅ CAPTCHA resuelto (clic en botón I M HUMAN)');
 
         await page.waitForLoadState('load', { timeout: 60000 });
 
         // Segundo click (GET LINK)
         await clickCaptchaButton();
-        console.log('✅ CAPTCHA resuelto (clic en boton GET LINK)');
+        console.log('✅ CAPTCHA resuelto (clic en botón GET LINK)');
 
         const finalUrl = page.url();
         console.log(`✅ URL final tras los 2 CAPTCHA: ${finalUrl}`);
         return finalUrl;
+
     } catch (error) {
         console.error(`❌ Error en CAPTCHA (Intento ${attempt}):`, error.message);
-        console.log(await page.content());
         await page.screenshot({ path: `error_captcha_attempt_${attempt}.png` });
+        console.log(await page.title());
+        console.log(await page.content());
+
         if (attempt < maxAttempts) {
             console.log('🔄 Reintentando en 5 segundos...');
             await page.waitForTimeout(5000);
@@ -200,6 +199,7 @@ async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttem
             '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
         ]
     });
+
 
     const context = await browser.newContext({
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
