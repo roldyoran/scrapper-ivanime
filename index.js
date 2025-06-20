@@ -86,7 +86,7 @@ async function bypassCaptcha(page, url) {
         // Espera a posibles redirecciones
         await page.waitForNavigation({ timeout: 10000 });
     } catch (error) {
-        console.error('❌ Error al resolver CAPTCHA:', error.message);
+        console.error('❌ Error al resolver CAPTCHA 1 Human:', error.message);
     }
 
     try {
@@ -102,7 +102,7 @@ async function bypassCaptcha(page, url) {
         await page.waitForNavigation({ timeout: 10000 });
         return page.url();
     } catch (error) {
-        console.error('❌ Error al resolver CAPTCHA:', error.message);
+        console.error('❌ Error al resolver CAPTCHA 2 Link:', error.message);
         return null;
     }
 }
