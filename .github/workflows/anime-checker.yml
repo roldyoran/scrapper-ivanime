@@ -1,4 +1,4 @@
-name: IVAnime Mega Checker
+name: Ivanime Mega Checker
 
 on:
   schedule:
@@ -32,7 +32,7 @@ jobs:
       
       # Paso 4: Ejecutar tu script
       - name: Run anime checker
-        run: npm run start
+        run: node index.js
       
       # Paso 5: Subir cambios al repositorio (commit + push)
       - name: Commit and push changes
