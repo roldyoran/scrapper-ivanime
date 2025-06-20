@@ -59,27 +59,24 @@ async function bypassCaptcha(page, url, attempt = 1, maxAttempts = 2) {
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
         await page.waitForLoadState('load', { timeout: 60000 });
 
-        await page.waitForSelector('#btn-main', { state: 'visible', timeout: 60000 });
-        const currentUrl = page.url();
-        await page.click('#btn-main');
+        await page.waitForSelector('#btn-main');
+        await Promise.all([
+            page.waitForNavigation(),  // Espera a que termine la navegación
+            page.click('#btn-main')    // Hace click que dispara la navegación
+            ]);
+        // await page.click('#btn-main');
         console.log('✅ CAPTCHA resuelto (clic en boton I M HUMAN)');
         
-        try {
-            await page.waitForURL(url => url !== currentUrl, { timeout: 60000 });
-        } catch {
-            await page.waitForLoadState('load', { timeout: 60000 });
-        }
-
-        await page.waitForSelector('#btn-main', { state: 'visible', timeout: 60000 });
-        const currentUrl2 = page.url();
-        await page.click('#btn-main');
+       
+        await page.waitForSelector('#btn-main');
+        await Promise.all([
+            page.waitForNavigation(),  // Espera a que termine la navegación
+            page.click('#btn-main')    // Hace click que dispara la navegación
+            ]);
+        // await page.click('#btn-main');
         console.log('✅ CAPTCHA resuelto (clic en botón GET LINK)');
 
-        try {
-            await page.waitForURL(url => url !== currentUrl2, { timeout: 60000 });
-        } catch {
-            await page.waitForLoadState('load', { timeout: 60000 });
-        }
+       
         
         const finalUrl = page.url();
         console.log(`✅ URL final tras CAPTCHA: ${finalUrl}`);
@@ -190,7 +187,7 @@ async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttem
 
     const animeLinks = {
         'tobeherox': 'https://www.ivanime.com/paste/2031576/',
-        'fireforce': 'https://www.ivanime.com/paste/3031564/',
+        // 'fireforce': 'https://www.ivanime.com/paste/3031564/',
     };
 
     try {
