@@ -1,6 +1,7 @@
 name: Anime Checker Workflow
 
 on:
+
   schedule:
     # Ejecuta diariamente a las 8:00 UTC (puedes ajustar el horario)
     - cron: '0 20 * * 6' # Sábado a las 20:00 UTC

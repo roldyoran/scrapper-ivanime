@@ -1,9 +1,9 @@
 name: Imprimir Hola
 
 on:
+  workflow_dispatch:  # Permite ejecutar manualmente
   push:  # Se ejecutará en cualquier push
   pull_request:  # Y en pull requests
-  workflow_dispatch:  # Permite ejecutar manualmente
 
 jobs:
   saludar:
