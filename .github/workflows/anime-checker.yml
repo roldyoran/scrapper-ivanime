@@ -26,8 +26,7 @@ jobs:
       # Paso 3: Instalar dependencias
       - name: Install dependencies
         run: 
-          npm install
-          npx playwright install
+          npm install && npx playwright install
       
       # Paso 4: Ejecutar tu script
       - name: Run anime checker
