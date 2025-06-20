@@ -1,0 +1,39 @@
+name:  Anime Scraper
+
+on:
+  workflow_dispatch:  # Permite ejecutarlo manualmente desde GitHub
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      # Paso 1: Checkout del repositorio (con permisos de escritura)
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Necesario para hacer commit después
+
+      # Paso 2: Configurar Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      # Paso 3: Instalar dependencias (Playwright + BeautifulSoup + Rich)
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install chromium
+          playwright install-deps
+
+      # Paso 4: Ejecutar tu script (genera animes_updated.json)
+      - name: Run scraper
+        run: python main.py  # Asegúrate de que el nombre del archivo coincida
+
+      # Paso 5: Subir cambios al repositorio (commit + push)
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Actualización automática: imagenes"
+          branch: master  # Cambia si usas otra rama
+          file_pattern: '*.png'  # Se actualizarán todos los archivos JSON
