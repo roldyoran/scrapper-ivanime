@@ -1,0 +1,55 @@
+name: Anime Checker Workflow
+
+on:
+  schedule:
+    # Ejecuta diariamente a las 8:00 UTC (puedes ajustar el horario)
+    - cron: '0 20 * * 6' # Sábado a las 20:00 UTC
+  workflow_dispatch:  # Permite ejecutarlo manualmente desde GitHub
+
+jobs:
+  anime-checker:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Paso 1: Checkout del repositorio (con permisos de escritura)
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        ref: 'feature/nodejs-implementation'
+        fetch-depth: 0  # Necesario para hacer commit después
+
+    # Paso 2: Configurar Node
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    # Paso 3: Instalar dependencias
+    - name: Install dependencies
+      run: npm install
+
+    - name: Install Playwright browsers
+      run: npx playwright install --with-deps
+
+    # Paso 4: Ejecutar tu script
+    - name: Run anime checker
+      run: node index.js
+
+    # - name: Upload results
+    #   uses: actions/upload-artifact@v3
+    #   if: always()
+    #   with:
+    #     name: mega-links
+    #     path: mega_links.json
+
+    # Paso 5: Commit y push de los cambios
+    - name: Commit and push changes
+      uses: stefanzweifel/git-auto-commit-action@v4
+      with:
+        commit_message: "Actualización automática de enlaces MEGA - $(date +'%Y-%m-%d %H:%M')"
+        branch: feature/nodejs-implementation
+        file_pattern: '*.json'
+        commit_user_name: 'GitHub Actions'
+        commit_user_email: 'actions@github.com'
+        commit_author: 'GitHub Actions <actions@github.com>'
