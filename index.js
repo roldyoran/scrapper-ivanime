@@ -56,9 +56,20 @@ async function getEpisodeData(page) {
 
 async function bypassCaptcha(page, url, attempt = 1, maxAttempts = 2) {
     console.log(`🔄 Intentando resolver CAPTCHA OUO.IO (Intento ${attempt}/${maxAttempts})`);
+
+    
+    
     try {
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
         await page.waitForLoadState('load', { timeout: 60000 });
+        
+        const title = await page.title();
+        if (title.includes("Just a moment")) {
+            console.log("🛡️ Página protegida por Cloudflare. Esperando bypass...");
+            await page.waitForTimeout(12000);
+        }
+        
+
 
         // Función para buscar el botón correcto y hacer click esperando navegación
         async function clickCaptchaButton() {
@@ -175,7 +186,7 @@ async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttem
     const db = await setupDatabase();
     await initializeDatabase(db);
 
-    const browser = await chromium.launch({ 
+    const browser = await chromium.launch({
         headless: true,
         args: [
             '--no-sandbox',
@@ -184,20 +195,23 @@ async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttem
             '--disable-gpu',
             '--single-process',
             '--no-zygote',
-            ]
+            '--disable-blink-features=AutomationControlled',
+            '--disable-features=IsolateOrigins,site-per-process',
+            '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
+        ]
     });
 
     const context = await browser.newContext({
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
         viewport: { width: 1920, height: 1080 },
         locale: 'es-ES',
         timezoneId: 'America/Guatemala',
         extraHTTPHeaders: {
             'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
             'Referer': 'https://www.ivanime.com/',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         }
     });
+
 
 
     const page = await context.newPage();
