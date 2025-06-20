@@ -40,4 +40,4 @@ jobs:
         with:
           commit_message: "Actualización automática de enlaces MEGA y DB"
           branch: main
-          file_pattern: '*.json'
+          file_pattern: '*.json *.png'

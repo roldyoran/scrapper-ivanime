@@ -194,8 +194,11 @@ async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttem
         timezoneId: 'America/Guatemala',
         extraHTTPHeaders: {
             'Accept-Language': 'es-ES,es;q=0.9,en;q=0.8',
+            'Referer': 'https://www.ivanime.com/',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
         }
     });
+
 
     const page = await context.newPage();
 
