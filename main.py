@@ -50,7 +50,7 @@ async def take_screenshot_async(mega_url, screenshot_path="screenshot.png"):
         async with async_playwright() as p:
             # Configuración con ventana visible (headless=False)
             browser = await p.chromium.launch(
-                headless=False,
+                headless=True,
                 args=[
                     '--disable-blink-features=AutomationControlled',
                     '--disable-features=IsolateOrigins,site-per-process',
