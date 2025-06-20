@@ -67,42 +67,167 @@ async function getEpisodeData(page) {
     return { count, megaLink };
 }
 
-async function bypassCaptcha(page, url) {
-    // Navega a la URL de MEGA
-    await page.goto(url, { 
-        waitUntil: 'domcontentloaded',
-        timeout: 30000
-    });
-
+async function bypassCaptcha(page, url, attempt = 1, maxAttempts = 2) {
+    console.log(`🔄 Intentando resolver CAPTCHA (Intento ${attempt}/${maxAttempts})`);
+    
     try {
+        // Navega a la URL de MEGA
+        await page.goto(url, { 
+            waitUntil: 'domcontentloaded',
+            timeout: 30000
+        });
+
         // Esperar a que la página se cargue completamente
-        await page.waitForLoadState('networkidle');
-        
-        // Espera y haz clic en el botón CAPTCHA
-        await page.waitForSelector('#btn-main', { state: 'visible', timeout: 16000 });
-        await page.click('#btn-main');
-        console.log('✅ CAPTCHA resuelto (clic en "I\'m a human")');
-        
-        // Espera a posibles redirecciones
-        await page.waitForNavigation({ timeout: 10000 });
-    } catch (error) {
-        console.error('❌ Error al resolver CAPTCHA 1 Human:', error.message);
-    }
-
-    try {
-        // Esperar a que la página se actualice
         await page.waitForLoadState('networkidle', { timeout: 30000 });
-
-        // Espera y haz clic en el botón CAPTCHA
-        await page.waitForSelector('#btn-main', { state: 'visible', timeout: 16000 });
-        await page.click('#btn-main');
-        console.log('✅ CAPTCHA resuelto (clic en "Get Link")');
         
-        // Espera a posibles redirecciones
-        await page.waitForNavigation({ timeout: 10000 });
-        return page.url();
+        // Primer CAPTCHA - "I'm a human"
+        try {
+            await page.waitForSelector('#btn-main', { state: 'visible', timeout: 30000 });
+            
+            // Obtener URL actual antes del clic
+            const currentUrl = page.url();
+            
+            await page.click('#btn-main');
+            console.log('✅ CAPTCHA 1 resuelto (clic en "I\'m a human")');
+            
+            // Esperar a que la URL cambie (redirección) o a que la página se recargue
+            try {
+                await page.waitForURL(url => url !== currentUrl, { timeout: 30000 });
+            } catch (urlError) {
+                // Si no hay cambio de URL, esperar a que la página se estabilice
+                await page.waitForLoadState('networkidle', { timeout: 30000 });
+            }
+            
+        } catch (error) {
+            console.error(`❌ Error al resolver CAPTCHA 1 Human (Intento ${attempt}):`, error.message);
+            throw error;
+        }
+
+        // Segundo CAPTCHA - "Get Link"
+        try {
+            // Esperar a que la página se actualice completamente
+            await page.waitForLoadState('networkidle', { timeout: 30000 });
+
+            // Esperar un poco más para asegurar que el DOM esté listo
+            await page.waitForTimeout(2000);
+
+            await page.waitForSelector('#btn-main', { state: 'visible', timeout: 30000 });
+            
+            // Obtener URL actual antes del segundo clic
+            const currentUrl = page.url();
+            
+            await page.click('#btn-main');
+            console.log('✅ CAPTCHA 2 resuelto (clic en "Get Link")');
+            
+            // Esperar a que la URL cambie nuevamente
+            try {
+                await page.waitForURL(url => url !== currentUrl, { timeout: 30000 });
+            } catch (urlError) {
+                // Si no hay cambio de URL, esperar a que la página se estabilice
+                await page.waitForLoadState('networkidle', { timeout: 30000 });
+            }
+            
+            const finalUrl = page.url();
+            console.log(`✅ CAPTCHA completado exitosamente en intento ${attempt}`);
+            console.log(`🔗 URL final: ${finalUrl}`);
+            return finalUrl;
+            
+        } catch (error) {
+            console.error(`❌ Error al resolver CAPTCHA 2 Link (Intento ${attempt}):`, error.message);
+            throw error;
+        }
+        
     } catch (error) {
-        console.error('❌ Error al resolver CAPTCHA 2 Link:', error.message);
+        console.error(`❌ Error general en CAPTCHA (Intento ${attempt}/${maxAttempts}):`, error.message);
+        
+        // Si falla y aún quedan intentos, reintenta
+        if (attempt < maxAttempts) {
+            console.log(`🔄 Reintentando resolver CAPTCHA en 5 segundos...`);
+            await page.waitForTimeout(5000);
+            return await bypassCaptcha(page, url, attempt + 1, maxAttempts);
+        }
+        
+        console.error(`❌ CAPTCHA falló después de ${maxAttempts} intentos`);
+        return null;
+    }
+}
+
+// Alternativa más robusta si sigues teniendo problemas:
+async function bypassCaptchaRobust(page, url, attempt = 1, maxAttempts = 2) {
+    console.log(`🔄 Intentando resolver CAPTCHA (Intento ${attempt}/${maxAttempts})`);
+    
+    try {
+        await page.goto(url, { 
+            waitUntil: 'domcontentloaded',
+            timeout: 30000
+        });
+
+        await page.waitForLoadState('networkidle', { timeout: 30000 });
+        
+        // Primer CAPTCHA
+        try {
+            await page.waitForSelector('#btn-main', { state: 'visible', timeout: 30000 });
+            
+            // Usar Promise.race para manejar múltiples posibles respuestas
+            await Promise.race([
+                page.click('#btn-main'),
+                page.waitForTimeout(1000) // Timeout de seguridad
+            ]);
+            
+            console.log('✅ CAPTCHA 1 resuelto (clic en "I\'m a human")');
+            
+            // Esperar a que algo cambie en la página
+            await Promise.race([
+                page.waitForLoadState('networkidle', { timeout: 15000 }),
+                page.waitForSelector('#btn-main', { state: 'visible', timeout: 15000 }),
+                page.waitForTimeout(10000) // Timeout máximo
+            ]);
+            
+        } catch (error) {
+            console.error(`❌ Error al resolver CAPTCHA 1 Human (Intento ${attempt}):`, error.message);
+            throw error;
+        }
+
+        // Segundo CAPTCHA
+        try {
+            // Esperar un poco antes del segundo intento
+            await page.waitForTimeout(3000);
+            
+            // Verificar si el botón existe
+            const buttonExists = await page.locator('#btn-main').isVisible();
+            if (!buttonExists) {
+                throw new Error('Botón #btn-main no encontrado para segundo CAPTCHA');
+            }
+            
+            await page.click('#btn-main');
+            console.log('✅ CAPTCHA 2 resuelto (clic en "Get Link")');
+            
+            // Esperar a que la página final se cargue
+            await Promise.race([
+                page.waitForLoadState('networkidle', { timeout: 15000 }),
+                page.waitForTimeout(10000)
+            ]);
+            
+            const finalUrl = page.url();
+            console.log(`✅ CAPTCHA completado exitosamente en intento ${attempt}`);
+            console.log(`🔗 URL final: ${finalUrl}`);
+            return finalUrl;
+            
+        } catch (error) {
+            console.error(`❌ Error al resolver CAPTCHA 2 Link (Intento ${attempt}):`, error.message);
+            throw error;
+        }
+        
+    } catch (error) {
+        console.error(`❌ Error general en CAPTCHA (Intento ${attempt}/${maxAttempts}):`, error.message);
+        
+        if (attempt < maxAttempts) {
+            console.log(`🔄 Reintentando resolver CAPTCHA en 5 segundos...`);
+            await page.waitForTimeout(5000);
+            return await bypassCaptchaRobust(page, url, attempt + 1, maxAttempts);
+        }
+        
+        console.error(`❌ CAPTCHA falló después de ${maxAttempts} intentos`);
         return null;
     }
 }
@@ -185,6 +310,8 @@ async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttem
                     fs.writeFileSync('./mega_links.json', JSON.stringify(allLinks, null, 2));
                     
                     return { success: true, animeName, megaUrlFinal, attempts: attempt };
+                } else {
+                    console.log('⚠️ No se pudo resolver el CAPTCHA después de todos los intentos');
                 }
             } else {
                 console.log('⚠️ No se encontró enlace MEGA');
@@ -216,7 +343,7 @@ async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttem
 
     // Configuración optimizada para headless con soporte JavaScript dinámico
     const browser = await chromium.launch({ 
-        headless: true,
+        headless: false,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
