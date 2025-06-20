@@ -106,9 +106,9 @@ async function bypassCaptcha(page, url) {
     }
 }
 
-async function processAnime(db, page, animeName, animeUrl) {
+async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttempts = 2) {
     try {
-        console.log(`\n🔍 Procesando anime: ${animeName}`);
+        console.log(`\n🔍 Procesando anime: ${animeName}${attempt > 1 ? ` (Intento ${attempt}/${maxAttempts})` : ''}`);
         
         // Obtener el contador actual de la base de datos
         const currentCount = await getCurrentCount(db, animeUrl);
@@ -141,11 +141,18 @@ async function processAnime(db, page, animeName, animeUrl) {
                     await updateCount(db, animeUrl, animeName, newCount);
                     console.log('💾 Base de datos actualizada');
                     
+                    const fecha = new Date();
+                    const fechaFormateada = fecha.toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric'
+                    }).replace(/\//g, '-');
+
                     // Guardar enlace en JSON
                     const animeData = {
                         name: animeName,
                         megaLink: megaUrlFinal,
-                        date: new Date().toISOString(),
+                        date: fechaFormateada,
                         episodeCount: newCount
                     };
 
@@ -176,7 +183,7 @@ async function processAnime(db, page, animeName, animeUrl) {
                     // Guardar los cambios
                     fs.writeFileSync('./mega_links.json', JSON.stringify(allLinks, null, 2));
                     
-                    return { success: true, animeName, megaUrlFinal };
+                    return { success: true, animeName, megaUrlFinal, attempts: attempt };
                 }
             } else {
                 console.log('⚠️ No se encontró enlace MEGA');
@@ -185,10 +192,18 @@ async function processAnime(db, page, animeName, animeUrl) {
             console.log('ℹ️ No hay nuevos episodios disponibles');
         }
         
-        return { success: false, animeName };
+        return { success: false, animeName, attempts: attempt };
     } catch (error) {
-        console.error(`❌ Error procesando ${animeName}:`, error.message);
-        return { success: false, animeName, error: error.message };
+        console.error(`❌ Error procesando ${animeName} (Intento ${attempt}/${maxAttempts}):`, error.message);
+        
+        // Si falla y aún quedan intentos, reintenta
+        if (attempt < maxAttempts) {
+            console.log(`🔄 Reintentando ${animeName} en 3 segundos...`);
+            await page.waitForTimeout(3000); // Pausa de 3 segundos antes del retry
+            return await processAnime(db, page, animeName, animeUrl, attempt + 1, maxAttempts);
+        }
+        
+        return { success: false, animeName, error: error.message, attempts: attempt };
     }
 }
 
@@ -294,22 +309,30 @@ async function processAnime(db, page, animeName, animeUrl) {
         console.log('\n📝 Resumen de resultados:');
         const updatedAnimes = results.filter(r => r.success);
         const failedAnimes = results.filter(r => !r.success && r.error);
+        const noNewEpisodes = results.filter(r => !r.success && !r.error);
         
         if (updatedAnimes.length > 0) {
             console.log('✅ Animes actualizados:');
             updatedAnimes.forEach(anime => {
-                console.log(`- ${anime.animeName}: ${anime.megaUrlFinal}`);
+                console.log(`- ${anime.animeName}: ${anime.megaUrlFinal} (${anime.attempts} intento${anime.attempts > 1 ? 's' : ''})`);
             });
         }
         
         if (failedAnimes.length > 0) {
             console.log('❌ Animes con errores:');
             failedAnimes.forEach(anime => {
-                console.log(`- ${anime.animeName}: ${anime.error}`);
+                console.log(`- ${anime.animeName}: ${anime.error} (${anime.attempts} intento${anime.attempts > 1 ? 's' : ''})`);
             });
         }
         
-        console.log(`\n🎉 Proceso completado. ${updatedAnimes.length} animes actualizados, ${failedAnimes.length} con errores.`);
+        if (noNewEpisodes.length > 0) {
+            console.log('ℹ️ Animes sin nuevos episodios:');
+            noNewEpisodes.forEach(anime => {
+                console.log(`- ${anime.animeName} (${anime.attempts} intento${anime.attempts > 1 ? 's' : ''})`);
+            });
+        }
+        
+        console.log(`\n🎉 Proceso completado. ${updatedAnimes.length} animes actualizados, ${failedAnimes.length} con errores, ${noNewEpisodes.length} sin nuevos episodios.`);
 
     } catch (error) {
         console.error('❌ Error general:', error.message);
