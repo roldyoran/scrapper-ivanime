@@ -52,25 +52,24 @@ async def take_screenshot_async(mega_url, screenshot_path="screenshot.png"):
             browser = await p.chromium.launch(
                 headless=True,
                 args=[
-                    '--disable-blink-features=AutomationControlled',
-                    '--disable-features=IsolateOrigins,site-per-process',
-                    '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36',
-                    '--start-maximized'
-                ],
+                        '--disable-blink-features=AutomationControlled',
+                        '--disable-features=IsolateOrigins,site-per-process',
+                        '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
+                    ],
                 slow_mo=500  # Mayor tiempo entre acciones
             )
             
-            context = await browser.new_context(
-                viewport={'width': 1920, 'height': 1080},
-                user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
-                # Desactivar detección de automation
-                bypass_csp=True,
-                java_script_enabled=True,
-                locale='en-US',
-                timezone_id='America/New_York'
-            )
+            # context = await browser.new_context(
+            #     viewport={'width': 1920, 'height': 1080},
+            #     user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
+            #     # Desactivar detección de automation
+            #     bypass_csp=True,
+            #     java_script_enabled=True,
+            #     locale='en-US',
+            #     timezone_id='America/New_York'
+            # )
             
-            page = await context.new_page()
+            page = await browser.new_page()
             
             try:
                 print(f"Navegando a: {mega_url}")
