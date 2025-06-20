@@ -1,52 +1,42 @@
-name: Anime Checker Workflow
+name: Daily Anime Checker
 
 on:
   schedule:
-    # Ejecuta diariamente a las 8:00 UTC (puedes ajustar el horario)
-    - cron: '0 20 * * 6' # Sábado a las 20:00 UTC
+    - cron: '0 20 * * 6'  # Sábado a las 20:00 UTC
   workflow_dispatch:  # Permite ejecutarlo manualmente desde GitHub
 
 jobs:
-  anime-checker:
+  check:
     runs-on: ubuntu-latest
-
     steps:
-    # Paso 1: Checkout del repositorio (con permisos de escritura)
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        ref: 'feature/nodejs-implementation'
-        fetch-depth: 0  # Necesario para hacer commit después
-        persist-credentials: true  # Necesario para poder hacer push después
-
-    # Paso 2: Configurar Node
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-
-    # Paso 3: Instalar dependencias
-    - name: Install dependencies
-      run: npm ci  # Usamos 'npm ci' para instalación limpia en CI
-
-    # Paso 4: Instalar Playwright
-    - name: Install Playwright browsers
-      run: npx playwright install --with-deps
-
-    # Paso 5: Ejecutar tu script
-    - name: Run anime checker
-      run: node index.js
-      env:
-        NODE_ENV: production  # Añadido para mejor manejo de entorno
-
-    # Paso 6: Commit y push de los cambios
-    - name: Commit and push changes
-      uses: stefanzweifel/git-auto-commit-action@v4
-      with:
-        commit_message: "Actualización automática de enlaces MEGA - $(date +'%Y-%m-%d %H:%M')"
-        branch: feature/nodejs-implementation
-        file_pattern: '*.json'
-        commit_user_name: 'GitHub Actions'
-        commit_user_email: 'actions@github.com'
-        commit_author: 'GitHub Actions <actions@github.com>'
+      # Paso 1: Checkout del repositorio (con permisos de escritura)
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: 'main'
+          fetch-depth: 0  # Necesario para hacer commit después
+      
+      # Paso 2: Configurar Node
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      # Paso 3: Instalar dependencias
+      - name: Install dependencies
+        run: |
+          npm ci
+          npx playwright install --with-deps
+      
+      # Paso 4: Ejecutar tu script
+      - name: Run anime checker
+        run: node index.js
+      
+      # Paso 5: Subir cambios al repositorio (commit + push)
+      - name: Commit and push changes
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Actualización automática de enlaces MEGA y DB - $(date +'%Y-%m-%d %H:%M')"
+          branch: main
+          file_pattern: '*.json *.db'
