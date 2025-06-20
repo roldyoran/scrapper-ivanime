@@ -182,7 +182,7 @@ async function processAnime(db, page, animeName, animeUrl) {
     const db = await setupDatabase();
     await initializeDatabase(db);
 
-    const browser = await chromium.launch({ headless: false });
+    const browser = await chromium.launch({ headless: true }); // Cambia a false si quieres ver el navegador
     const page = await browser.newPage();
 
     // Diccionario con diferentes nombres de anime y enlaces
