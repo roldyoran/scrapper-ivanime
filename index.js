@@ -343,7 +343,7 @@ async function processAnime(db, page, animeName, animeUrl, attempt = 1, maxAttem
 
     // Configuración optimizada para headless con soporte JavaScript dinámico
     const browser = await chromium.launch({ 
-        headless: false,
+        headless: true,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
