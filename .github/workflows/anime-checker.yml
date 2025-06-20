@@ -31,13 +31,6 @@ jobs:
       - name: Install Playwright
         run: npx playwright install --with-deps
 
-      # Cache Playwright dependencies
-      - name: Cache Playwright storage
-        uses: actions/cache@v3
-        with:
-          path: storage.json
-          key: ${{ runner.os }}-playwright-storage-v1
-
       
       # Paso 4: Ejecutar tu script
       - name: Run anime checker
