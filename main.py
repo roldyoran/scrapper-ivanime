@@ -132,7 +132,7 @@ class CloudflareBypasser:
                 
                 # Configuración del navegador para evadir detección
                 browser = await p.chromium.launch(
-                    headless=False,  # Cambiar a True si no quieres ver el navegador
+                    headless=True,  # Cambiar a True si no quieres ver el navegador
                     args=[
                         '--disable-blink-features=AutomationControlled',
                         '--disable-features=VizDisplayCompositor',
