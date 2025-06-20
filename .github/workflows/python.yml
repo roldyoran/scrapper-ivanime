@@ -36,4 +36,4 @@ jobs:
         with:
           commit_message: "Actualización automática: imagenes"
           branch: master  # Cambia si usas otra rama
-          file_pattern: '*.png'  # Se actualizarán todos los archivos JSON
+          file_pattern: '*'  # Se actualizarán todos los archivos JSON
