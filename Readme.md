@@ -1,5 +1,7 @@
 # Anime Episode Checker (IVANIME)
 
+NOTA: SOLO FUNCIONA LOCALMENTE, EN GITHUB ACTIONS NO LOGRA PASAR EL BYPASS DE CLOUDFLARE EN OUO.IO
+
 Herramienta automatizada para verificar nuevos episodios de anime en ivanime.com y obtener enlaces de descarga de MEGA.
 
 ## 🚀 Características
